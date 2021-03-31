@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Modal, Button, DatePicker, Divider} from 'antd';
-import {Dropdown, Menu, TreeSelect, Space} from "antd";
+import {Dropdown, Menu, Space} from "antd";
 import Select from "react-select";
 import {getInstance} from "d2";
 import {DownOutlined} from "@ant-design/icons";
@@ -23,15 +23,12 @@ const { RangePicker } = DatePicker;
 const MainForm = (props) => {
 
     var periods = ["Choose By","Week", "Month"];
-    var orgUnitFilters = ["Filter By", "Markets"];
-    const basicAuth = "Basic " + btoa("ahmed:Atwabi@20");
 
     const [showLoading, setShowLoading] = useState(false);
     const [programs, setPrograms] = useState([]);
     const [programStages, setProgramStages] = useState([]);
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [D2, setD2] = useState();
-    const [summary, setSummary] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [dates, setDates] = useState([]);
     const [hackValue, setHackValue] = useState();
@@ -120,11 +117,9 @@ const MainForm = (props) => {
 
 
     useEffect(() => {
-        //setOrgUnits(props.organizationalUnits);
         setPrograms(props.programs);
-        //setTreeMarkets(props.treeMarkets);
 
-    },[summary, props.organizationalUnits, props.programs, props.d2, props.marketOrgUnits, props.treeMarkets]);
+    },[props.programs, props.d2]);
 
 
     const handleProgram = selectedOption => {
@@ -273,18 +268,26 @@ const MainForm = (props) => {
                                     <MDBRow>
 
                                         <MDBCol md={12}>
-                                                <MDBRow>
-                                                    <Space direction="vertical" size={12}>
+                                            <MDBRow>
+                                                <Space direction="vertical" size={12}>
 
-                                                        <DatePicker
-                                                            className="mt-1 w-100"
-                                                            size="large"
-                                                            placeholder="Select date of events"
-                                                            style={{ minWidth: "24rem" }}
-                                                            onChange={onChange}
-                                                        />
-                                                    </Space>
-                                                </MDBRow>
+                                                    <DatePicker
+                                                        className="mt-1 w-100"
+                                                        size="large"
+                                                        placeholder="Select date of events"
+                                                        style={{ minWidth: "24rem" }}
+                                                        onChange={onChange}
+                                                    />
+                                                </Space>
+                                            </MDBRow>
+                                            <MDBRow className="d-flex justify-content-center align-items-center">
+
+                                                {showLoading ? <>
+                                                    <div className="spinner-border text-center mt-2 mr-5 text-primary spinner-border-sm" role="status">
+                                                        <span className="sr-only">Loading...</span>
+                                                    </div>
+                                                </> : null}
+                                            </MDBRow>
 
                                         </MDBCol>
                                     </MDBRow>
