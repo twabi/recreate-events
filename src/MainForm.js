@@ -20,6 +20,7 @@ import {
 
 var moment = require("moment");
 const { RangePicker } = DatePicker;
+const basicAuth = "Basic " + btoa("ahmed:Atwabi@20");
 const MainForm = (props) => {
 
     var periods = ["Choose By","Week", "Month"];
@@ -103,7 +104,94 @@ const MainForm = (props) => {
     };
 
     const handleOk = () => {
-        setIsModalVisible(false);
+        console.log(selectedDate);
+        var date = moment(selectedDate).format("YYYY-MM-DDTHH:mm:ss.SSS");
+        console.log(moment(selectedDate).format("YYYY-MM-DDTHH:mm:ss.SSS"));
+
+        var valueArray = [];
+        events.map((event) => {
+            var eventID = event.event;
+
+            var eventPayload = {
+                "storedBy": event.storedBy,
+                "dueDate": event.dueDate,
+                "program": event.program,
+                "href": event.href,
+                "event": event.event,
+                "programStage": event.programStage,
+                "orgUnit": event.orgUnit,
+                "trackedEntityInstance": event.trackedEntityInstance,
+                "enrollment": event.enrollment,
+                "enrollmentStatus": event.enrollmentStatus,
+                "status": event.status,
+                "orgUnitName": event.orgUnitName,
+                "eventDate": event.eventDate,
+                "attributeCategoryOptions": event.attributeCategoryOptions,
+                "lastUpdated": date,
+                "created": date,
+                "completedDate": event.completedDate,
+                "followup": event.followup,
+                "deleted": event.deleted,
+                "attributeOptionCombo": event.attributeOptionCombo,
+                "completedBy": event.completedBy,
+                "dataValues": [],
+                "notes": [ ],
+                "createdByUserInfo": {
+                    "firstName": event.createdByUserInfo.firstName,
+                    "surname": event.createdByUserInfo.surname,
+                    "uid": event.createdByUserInfo.uid,
+                    "username": event.createdByUserInfo.username,
+                },
+                "lastUpdatedByUserInfo" : {
+                    "firstName": event.lastUpdatedByUserInfo.firstName,
+                    "surname": event.lastUpdatedByUserInfo.surname,
+                    "uid": event.lastUpdatedByUserInfo.uid,
+                    "username": event.lastUpdatedByUserInfo.username,
+                }
+            }
+
+            event.dataValues && event.dataValues.map((dataValue) => {
+                valueArray.push(
+                    {
+                        "lastUpdated": dataValue.lastUpdated,
+                        "storedBy": dataValue.storedBy,
+                        "created": dataValue.created,
+                        "dataElement": dataValue.dataElement,
+                        "value": dataValue.value,
+                        "providedElsewhere": dataValue.providedElsewhere
+                    }
+                )
+            });
+
+            eventPayload.dataValues = valueArray;
+
+            console.log(eventPayload);
+
+            /*
+            fetch(`https://covmw.com/namistest/api/events/${eventID}.json?`, {
+                method: 'POST',
+                body: JSON.stringify(eventPayload),
+                headers: {
+                    'Authorization' : basicAuth,
+                    'Content-type': 'application/json',
+                },
+
+                credentials: "include"
+
+            })
+                .then(response => {
+                    console.log(response);
+                })
+                .catch((error) => {
+
+                });
+
+             */
+        });
+
+
+
+        //setIsModalVisible(false);
     };
 
     const handleCancel = () => {
@@ -159,15 +247,18 @@ const MainForm = (props) => {
             var tempArray = []
             d2.Api.getApi().get(eventsPoint)
                 .then((response) => {
-                    console.log(response.events);
+                    /*
                     response.events.map((item) => {
                         var date = moment(item.eventDate);
                         if (date.isBetween(start, end)) {
                             tempArray.push(item);
                         }
                     });
+                     */
 
-                    setEvents(tempArray);
+
+                    console.log(response.events);
+                    setEvents(response.events);
                 }).then(() => {
                     showModal();
                 })
