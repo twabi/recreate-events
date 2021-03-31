@@ -18,7 +18,7 @@ import {
     MDBRow,
 } from "mdbreact";
 
-
+var moment = require("moment");
 const { RangePicker } = DatePicker;
 const MainForm = (props) => {
 
@@ -28,6 +28,7 @@ const MainForm = (props) => {
 
     const [showLoading, setShowLoading] = useState(false);
     const [programs, setPrograms] = useState([]);
+    const [programStages, setProgramStages] = useState([]);
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [D2, setD2] = useState();
     const [summary, setSummary] = useState([]);
@@ -40,6 +41,8 @@ const MainForm = (props) => {
     const [value, setValue] = useState();
     const [selectedDate, setSelectedDate] = useState();
     const [thisPeriod, setThisPeriod] = useState(periods[0]);
+    const [selectedProgramStage, setSelectedProgramStage] = useState(null);
+    const [events, setEvents] = useState([]);
     //setSummary(summary => [...summary, {"enrolment": enrolID, "message" : "Successfully deleted"}]);
     getInstance().then(d2 =>{
         setD2(d2);
@@ -110,6 +113,11 @@ const MainForm = (props) => {
         setIsModalVisible(false);
     };
 
+    const handleProgramStage = selectedOption => {
+        console.log(selectedOption);
+        setSelectedProgramStage(selectedOption);
+    }
+
 
     useEffect(() => {
         //setOrgUnits(props.organizationalUnits);
@@ -122,7 +130,59 @@ const MainForm = (props) => {
     const handleProgram = selectedOption => {
         console.log(selectedOption);
         setSelectedProgram(selectedOption);
+
+        getInstance().then((d2) => {
+            const stagePoint = `programs/${selectedOption.id}.json?fields=programStages[id,name]`;
+            d2.Api.getApi().get(stagePoint)
+                .then((response) => {
+                    const tempArray = []
+                    response.programStages.map((item, index) => {
+                        tempArray.push({"id" : item.id, "label" : item.name});
+                    });
+                    setProgramStages(tempArray);
+                })
+                .catch((error) => {
+                    console.log(error);
+                    alert("An error occurred: " + error);
+                });
+        });
     };
+
+    const handleFetchEvents = () => {
+
+        console.log(selectedProgram.id);
+        console.log(selectedProgramStage.id);
+        console.log(startDate + "-" + endDate);
+
+        var programID = selectedProgram.id;
+        var stageID = selectedProgramStage.id;
+        var start = moment(startDate);
+        var end = moment(endDate);
+
+        getInstance().then((d2) => {
+            const eventsPoint = `events.json?program=${programID}&programStage=${stageID}`;
+            var tempArray = []
+            d2.Api.getApi().get(eventsPoint)
+                .then((response) => {
+                    console.log(response.events);
+                    response.events.map((item) => {
+                        var date = moment(item.eventDate);
+                        if (date.isBetween(start, end)) {
+                            tempArray.push(item);
+                        }
+                    });
+
+                    setEvents(tempArray);
+                }).then(() => {
+                    showModal();
+                })
+                .catch((error) => {
+                    console.log(error);
+                    alert("An error occurred: " + error);
+                });
+        });
+
+    }
 
 
     return (
@@ -148,24 +208,37 @@ const MainForm = (props) => {
 
                             <hr/>
 
-                            <Divider orientation="left" className="font-italic">Select Stage 1 program and Period</Divider>
+                            <Divider orientation="left" className="font-italic">Select Round 1 program and Period</Divider>
 
                             <MDBContainer className="pl-5 mt-3 mb-3">
                                 <MDBRow>
-                                    <MDBCol md={7}>
+                                    <MDBCol md={4}>
                                         <div className="text-left my-3">
                                             <label className="grey-text ml-2">
                                                 <strong>Select Program</strong>
                                             </label>
                                             <Select
-                                                className="mt-2 w-75"
+                                                className="mt-2 w-100"
                                                 onChange={handleProgram}
                                                 options={programs}
                                             />
                                         </div>
                                     </MDBCol>
 
-                                    <MDBCol md={5}>
+                                    <MDBCol md={4}>
+                                        <div className="text-left my-3">
+                                            <label className="grey-text ml-2">
+                                                <strong>Select Program Stages</strong>
+                                            </label>
+                                            <Select
+                                                className="mt-2 w-100"
+                                                onChange={handleProgramStage}
+                                                options={programStages}
+                                            />
+                                        </div>
+                                    </MDBCol>
+
+                                    <MDBCol md={4}>
                                         <div className="text-left my-3">
                                             <label className="grey-text ml-2">
                                                 <strong>Select Start & End Date</strong>
@@ -178,7 +251,7 @@ const MainForm = (props) => {
 
                                                 <RangePicker
                                                     className="mt-1"
-                                                    style={{ minWidth: "25rem" }}
+                                                    style={{ width: "100%" }}
                                                     value={hackValue || value}
                                                     disabledDate={disabledDate}
                                                     size="large"
@@ -194,38 +267,35 @@ const MainForm = (props) => {
                                 </MDBRow>
                             </MDBContainer>
 
+                            <Modal title="Select Period for Round 2 Re-created Events" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
 
-                            <Divider orientation="left" className="font-italic mt-3">Select Period for stage 2 events</Divider>
+                                <MDBContainer>
+                                    <MDBRow>
 
-                            <MDBContainer className="pl-5 mt-3">
-                                <MDBRow>
+                                        <MDBCol md={12}>
+                                                <MDBRow>
+                                                    <Space direction="vertical" size={12}>
 
-                                    <MDBCol md={4}>
-                                        <div className="text-left my-3">
-                                            <label className="grey-text ml-2">
-                                                <strong>Select date of events to be created</strong>
-                                            </label>
-                                            <Space direction="vertical" size={12}>
+                                                        <DatePicker
+                                                            className="mt-1 w-100"
+                                                            size="large"
+                                                            placeholder="Select date of events"
+                                                            style={{ minWidth: "24rem" }}
+                                                            onChange={onChange}
+                                                        />
+                                                    </Space>
+                                                </MDBRow>
 
-                                                <DatePicker
-                                                    className="mt-1 w-100"
-                                                    size="large"
-                                                    placeholder="Select date of events"
-                                                    style={{ minWidth: "29rem" }}
-                                                    onChange={onChange}
-                                                />
-                                            </Space>
-                                        </div>
-
-                                    </MDBCol>
-                                </MDBRow>
-                            </MDBContainer>
+                                        </MDBCol>
+                                    </MDBRow>
+                                </MDBContainer>
+                            </Modal>
 
                         </MDBCardBody>
                         <MDBCardFooter>
                             <Button type="primary" size="large" className="text-white" onClick={() => {
-                                setSummary([]);
-                                showModal();
+                                handleFetchEvents()
+                                //showModal();
                             }}>
                                 Recreate{showLoading ? <div className="spinner-border mx-2 text-white spinner-border-sm" role="status">
                                 <span className="sr-only">Loading...</span>

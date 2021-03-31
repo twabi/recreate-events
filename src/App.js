@@ -32,7 +32,9 @@ function App() {
 
             const tempArray = []
             response.programs.map((item, index) => {
-              tempArray.push({"id" : item.id, "label" : item.displayName});
+                if(item.displayName.includes("APES: Form 1")){
+                    tempArray.push({"id" : item.id, "label" : item.displayName});
+                }
             });
             setPrograms(tempArray);
           })
