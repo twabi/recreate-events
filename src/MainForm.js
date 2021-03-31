@@ -1,25 +1,27 @@
 import React, {useEffect, useState} from "react";
-import "mdbreact/dist/css/mdb.css";
+import {Modal, Button, DatePicker, Divider} from 'antd';
+import {Dropdown, Menu, TreeSelect, Space} from "antd";
+import Select from "react-select";
+import {getInstance} from "d2";
+import {DownOutlined} from "@ant-design/icons";
+import Header from "@dhis2/d2-ui-header-bar"
 import {
     MDBBox,
     MDBBtn,
     MDBCard,
-    MDBCardBody,
+    MDBCardBody, MDBCardFooter,
     MDBCardText,
     MDBCardTitle,
     MDBCol,
     MDBContainer, MDBModal, MDBModalBody, MDBModalFooter, MDBModalHeader,
     MDBRow,
 } from "mdbreact";
-import {Button, Dropdown, Menu, TreeSelect} from "antd";
-import Select from "react-select";
-import {getInstance} from "d2";
-import {DownOutlined} from "@ant-design/icons";
-import Header from "@dhis2/d2-ui-header-bar"
 
 
+const { RangePicker } = DatePicker;
 const MainForm = (props) => {
 
+    var periods = ["Choose By","Week", "Month"];
     var orgUnitFilters = ["Filter By", "Markets"];
     const basicAuth = "Basic " + btoa("ahmed:Atwabi@20");
 
@@ -39,18 +41,80 @@ const MainForm = (props) => {
     const [message, setMessage] = useState("");
     const [messageBody, setMessageBody] = useState("");
     const [summary, setSummary] = useState([]);
-
+    const [selectedOrgUnit, setSelectedOrgUnit] = useState();
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [dates, setDates] = useState([]);
+    const [hackValue, setHackValue] = useState();
+    const [range, setRange] = useState(7);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [value, setValue] = useState();
+    const [thisPeriod, setThisPeriod] = useState(periods[0]);
+    //setSummary(summary => [...summary, {"enrolment": enrolID, "message" : "Successfully deleted"}]);
     getInstance().then(d2 =>{
         setD2(d2);
     });
 
-    const toggle = () => {
-        setModal(!modal)
+    const menu = (
+        <Menu>
+            {periods.map((item, index) => (
+                <Menu.Item key={index} onClick={()=>{handlePeriod(item)}}>
+                    {item}
+                </Menu.Item>
+            ))}
+        </Menu>
+    );
+
+    const disabledDate = current => {
+        if (!dates || dates.length === 0) {
+            return false;
+        }
+        const tooLate = dates[0] && current.diff(dates[0], 'days') > range;
+        const tooEarly = dates[1] && dates[1].diff(current, 'days') > range;
+        return tooEarly || tooLate;
+    };
+
+    const onOpenChange = open => {
+        if (open) {
+            setHackValue([]);
+            setDates([]);
+        } else {
+            setHackValue(undefined);
+        }
+    };
+
+    const handlePeriod = (value) => {
+        setThisPeriod(value);
+        if(value === "Week"){
+            setRange(7);
+        } else if(value === "Month"){
+            setRange(30);
+        } else {
+            setRange(7);
+        }
+    };
+
+    const handleDateChange = (selectedValue) => {
+        setValue(selectedValue);
+        const valueOfInput1 = selectedValue && selectedValue[0].format().split("+");
+        const valueOfInput2 = selectedValue && selectedValue[1].format().split("+");
+
+        setStartDate(valueOfInput1[0])
+        setEndDate(valueOfInput2[0])
     }
 
-    const toggleAlert = () => {
-        setAlertModal(!alertModal);
-    }
+    const showModal = () => {
+        setIsModalVisible(true);
+    };
+
+    const handleOk = () => {
+        setIsModalVisible(false);
+    };
+
+    const handleCancel = () => {
+        setIsModalVisible(false);
+    };
+
 
     useEffect(() => {
         setOrgUnits(props.organizationalUnits);
@@ -64,26 +128,8 @@ const MainForm = (props) => {
     };
 
     const onSelect = (value, node) => {
-        //setSelectedOrgUnit(node);
-
-        var children = extractChildren(node)
-        var tempArray = [];
-        if(children === undefined){
-            tempArray.push(node);
-            setFlattenedUnits(tempArray)
-        } else {
-            let flat = flatten(extractChildren(node), extractChildren, node.level, node.parent)
-                .map(x => delete x.children && x);
-            //console.log(flat)
-            setFlattenedUnits(flat);
-        }
+        setSelectedOrgUnit(node);
     };
-
-    let extractChildren = x => x.children;
-    let flatten = (children, getChildren, level, parent) => Array.prototype.concat.apply(
-        children && children.map(x => ({ ...x, level: level || 1, parent: parent || null })),
-        children && children.map(x => flatten(getChildren(x) || [], getChildren, (level || 1) + 1, x.id))
-    );
 
     const handleTree = (value, label, extra) => {
         setTreeValue(value)
@@ -92,130 +138,14 @@ const MainForm = (props) => {
 
     const onSelectTree = (value, node) => {
         //setOrgUnit(selectedOrgUnit => [...selectedOrgUnit, node]);
-        //setSelectedOrgUnit(node);
+        setSelectedOrgUnit(node);
         console.log(node);
-
-        var children = extractChildren(node);
-
-        if(children === undefined){
-            setFlattenedUnits([node]);
-        } else {
-            let flat = flatten(extractChildren(node), extractChildren, node.level, node.parent)
-                .map(x => delete x.children && x);
-            //console.log(flat)
-            setFlattenedUnits(flat);
-        }
     };
 
     const handleProgram = selectedOption => {
         console.log(selectedOption);
         setSelectedProgram(selectedOption);
     };
-
-    const deleteEnrolment = (enrol) => {
-
-        var enrolID = enrol.enrollment;
-        console.log(enrolID);
-        fetch(`https://covmw.com/namistest/api/enrollments/${enrolID}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization' : basicAuth,
-                'Content-type': 'application/json',
-            },
-            credentials: "include"
-
-        })
-            .then(response => response.json())
-            .then((result) => {
-                console.log(result);
-                //setMessage("Success");
-                //setMessageBody("The enrollments for the chosen program and orgUnits were successfully deleted");
-                //toggleAlert();
-                setSummary(summary => [...summary, {"enrolment": enrolID, "message" : "Successfully deleted"}]);
-
-            })
-            .catch((error) => {
-                //setMessage("Error");
-                //setMessageBody("Unable to delete due to an error: " + error)
-                //toggleAlert();
-                setSummary(summary => [...summary, {"enrolment": enrolID, "message" : "Unable to delete due to an error" + error}]);
-
-            });
-    }
-
-    const functionWithPromise = enrol => { //a function that returns a promise
-
-        deleteEnrolment(enrol);
-        return message;
-    }
-
-    const anAsyncFunction = async item => {
-        return functionWithPromise(item)
-    }
-
-    const deleteData = async (list) => {
-        return await Promise.all(list.map(item => anAsyncFunction(item)))
-    }
-
-    const handleDeletion = () => {
-        toggle();
-        //setShowLoading(true);
-        //var progID = selectedProgram.id;
-        console.log(flattenedUnits)
-        //console.log(progID);
-
-        if(flattenedUnits.length !== 0  && selectedProgram !== null){
-            var programID = selectedProgram.id;
-
-            var enrollments = [];
-
-            flattenedUnits.map((unit) => {
-                getInstance()
-                    .then((d2) => {
-                        const endpoint = `enrollments.json?ou=${unit.id}&program=${programID}&fields=enrollment`;
-                        d2.Api.getApi().get(endpoint)
-                            .then((response) => {
-                                console.log(response.enrollments);
-                                enrollments = enrollments.concat(response.enrollments);
-                                //setEnrolArray(enrolArray => [...enrolArray, response.enrollments]);
-                            })
-                            .then(() => {
-                                console.log(enrollments);
-                                if(enrollments.length == 0){
-                                    setMessage("Alert");
-                                    setMessageBody("Unable to delete! No enrolments found for the chosen program or orgUnit.");
-                                    toggleAlert();
-                                }
-                                deleteData(enrollments)
-                                    .then((r) =>{
-                                        setShowLoading(false);
-                                        console.log(summary);
-                                        setMessage("Operation Complete");
-                                        setMessageBody("A summary of enrolments delete operation: ");
-                                        toggleAlert();
-                                    }).catch((err) => {
-                                    console.log("an error occurred: " + err);
-                                });
-                            })
-                            .catch((error) => {
-                                console.log(error);
-                            });
-                    }).then(() => {
-
-                });
-            });
-
-            //console.log(enrollments);
-
-
-            /*
-            */
-        } else {
-            console.log("things are null");
-        }
-
-
-    }
 
 
     const handleOrgFilter = (value) => {
@@ -249,143 +179,124 @@ const MainForm = (props) => {
 
     return (
         <div>
+            <Modal title="Basic Modal" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+                <p>Some contents...</p>
+                <p>Some contents...</p>
+                <p>Some contents...</p>
+            </Modal>
             {D2 && <Header className="mb-5" d2={D2}/>}
             <MDBBox className="mt-5" display="flex" justifyContent="center" >
                 <MDBCol className="mb-5 mt-5" md="10">
                     <MDBCard display="flex" justifyContent="center" className="text-xl-center w-100">
                         <MDBCardBody>
                             <MDBCardTitle>
-                                <strong>Delete Enrolments</strong>
+                                <strong>Recreate Events</strong>
                             </MDBCardTitle>
 
                             <MDBCardText>
-                                <strong>Select Enrolment Program and Org Unit(s)</strong>
+                                <strong>Select program and the period range of the events to be replicated</strong>
                             </MDBCardText>
-
-                            {programs.length == 0 ? <div className="spinner-border mx-2 indigo-text spinner-border-sm" role="status">
+                            {programs.length === 0 ? <div className="spinner-border mx-2 indigo-text spinner-border-sm" role="status">
                                 <span className="sr-only">Loading...</span>
                             </div> : null}
 
-                            <MDBContainer>
-                                <MDBModal isOpen={modal} toggle={toggle} centered>
-                                    <MDBModalHeader toggle={toggle}>Confirmation</MDBModalHeader>
-                                    <MDBModalBody>
-                                        All the enrollments for the chosen orgUnit(and it's children) will be deleted.
-                                        Are you sure you want to delete?
-                                    </MDBModalBody>
-                                    <MDBModalFooter>
-                                        <MDBBtn color="secondary" className="mx-1" onClick={toggle}>Cancel</MDBBtn>
-                                        <MDBBtn color="primary" className="mx-1" onClick={handleDeletion}>Delete</MDBBtn>
-                                    </MDBModalFooter>
-                                </MDBModal>
-                            </MDBContainer>
-
-                            <MDBContainer>
-                                <MDBModal isOpen={alertModal} toggle={toggleAlert} centered size="lg">
-                                    <MDBModalHeader toggle={toggleAlert}>{message}</MDBModalHeader>
-                                    <MDBModalBody>
-                                        <h4 className="mb-3">
-                                            {messageBody}
-                                        </h4>
-
-                                        {summary.map((item) => (
-                                            <MDBCard className="border-dark my-1">
-                                                <p>Enrolment: {item.enrolment}</p>
-                                                <p>message: {item.message}</p>
-                                            </MDBCard>
-
-                                        ))}
-
-                                        {summary.length == 0 ? <div>
-                                            <p>Found no enrolments to delete</p>
-                                        </div> : null}
-                                    </MDBModalBody>
-                                </MDBModal>
-                            </MDBContainer>
-
                             <hr/>
+
+                            <Divider orientation="left" className="font-italic">Select Stage 1 program and Period</Divider>
 
                             <MDBContainer className="pl-5 mt-3">
                                 <MDBRow>
-                                    <MDBCol>
+                                    <MDBCol md={5}>
                                         <div className="text-left my-3">
                                             <label className="grey-text ml-2">
                                                 <strong>Select Program</strong>
                                             </label>
                                             <Select
+                                                style={{ width: '100%' }}
                                                 className="mt-2"
                                                 onChange={handleProgram}
                                                 options={programs}
                                             />
                                         </div>
                                     </MDBCol>
-                                    <MDBCol>
 
+                                    <MDBCol md={5} className="float-right">
                                         <div className="text-left my-3">
                                             <label className="grey-text ml-2">
-                                                <strong>Select Organization Unit</strong>
-                                                <Dropdown overlay={orgUnitMenu} className="ml-3">
-                                                    <Button size="small">{orgFilter} <DownOutlined /></Button>
+                                                <strong>Select Start & End Date</strong>
+                                                <Dropdown overlay={menu} className="ml-3">
+                                                    <Button size="small">{thisPeriod} <DownOutlined /></Button>
                                                 </Dropdown>
                                             </label>
 
-                                            {choseFilter ?
-                                                <TreeSelect
-                                                    style={{ width: '100%' }}
-                                                    value={treeValue}
-                                                    className="mt-2"
-                                                    dropdownStyle={{ maxHeight: 400, overflow: 'auto'}}
-                                                    treeData={treeMarkets}
-                                                    allowClear
-                                                    size="large"
-                                                    placeholder="Please select organizational unit"
-                                                    onChange={handleTree}
-                                                    onSelect={onSelectTree}
-                                                    showSearch={true}
-                                                />
-                                                :
-                                                <TreeSelect
-                                                    style={{ width: '100%' }}
-                                                    value={searchValue}
-                                                    className="mt-2"
-                                                    dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-                                                    treeData={orgUnits}
-                                                    allowClear
-                                                    size="large"
-                                                    placeholder="Please select organizational unit"
-                                                    onChange={handle}
-                                                    onSelect={onSelect}
-                                                    showSearch={true}
-                                                />
+                                            <Space direction="vertical" size={12}>
 
-                                            }
+                                                <RangePicker
+                                                    className="mt-1"
+                                                    style={{ width: '100%' }}
+                                                    value={hackValue || value}
+                                                    disabledDate={disabledDate}
+                                                    size="large"
+                                                    onCalendarChange={val => setDates(val)}
+                                                    onChange={handleDateChange}
+                                                    onOpenChange={onOpenChange}
+                                                />
+                                            </Space>
 
                                         </div>
+
                                     </MDBCol>
                                 </MDBRow>
-
-                                <MDBRow className="mt-4">
-
-                                </MDBRow>
-
                             </MDBContainer>
 
-                            <div className="text-center py-4 mt-2">
 
-                                <MDBBtn color="cyan" className="text-white" onClick={() => {
-                                    setSummary([])
-                                    toggle();
-                                }}>
-                                    Delete Enrolments{showLoading ? <div className="spinner-border mx-2 text-white spinner-border-sm" role="status">
-                                    <span className="sr-only">Loading...</span>
-                                </div> : null}
-                                </MDBBtn>
-                            </div>
+                            <Divider orientation="left" className="font-italic">Select Period for stage 2 events</Divider>
+
+                            <MDBContainer className="pl-5 mt-3">
+                                <MDBRow>
+
+                                    <MDBCol md={4}>
+                                        <div className="text-left my-3">
+                                            <label className="grey-text ml-2">
+                                                <strong>Select Start & End Date</strong>
+                                                <Dropdown overlay={menu} className="ml-3">
+                                                    <Button size="small">{thisPeriod} <DownOutlined /></Button>
+                                                </Dropdown>
+                                            </label>
+                                            <Space direction="vertical" size={12}>
+
+                                                <RangePicker
+                                                    className="mt-2"
+                                                    style={{ width: '100%' }}
+                                                    value={hackValue || value}
+                                                    disabledDate={disabledDate}
+                                                    size="large"
+                                                    onCalendarChange={val => setDates(val)}
+                                                    onChange={handleDateChange}
+                                                    onOpenChange={onOpenChange}
+                                                />
+                                            </Space>
+                                        </div>
+
+                                    </MDBCol>
+                                </MDBRow>
+                            </MDBContainer>
 
                         </MDBCardBody>
+                        <MDBCardFooter>
+                            <Button type="primary" className="text-white" onClick={() => {
+                                setSummary([]);
+                                showModal();
+                            }}>
+                                Recreate{showLoading ? <div className="spinner-border mx-2 text-white spinner-border-sm" role="status">
+                                <span className="sr-only">Loading...</span>
+                            </div> : null}
+                            </Button>
+                        </MDBCardFooter>
                     </MDBCard>
                 </MDBCol>
             </MDBBox>
+
         </div>
     )
 }
