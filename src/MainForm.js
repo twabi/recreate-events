@@ -57,8 +57,6 @@ const MainForm = (props) => {
         setPrograms(props.programs);
         setTreeMarkets(props.treeMarkets);
 
-
-
     },[summary, props.organizationalUnits, props.programs, props.d2, props.marketOrgUnits, props.treeMarkets]);
 
     const handle = (value, label, extra) => {
