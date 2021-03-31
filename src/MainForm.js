@@ -5,15 +5,16 @@ import Select from "react-select";
 import {getInstance} from "d2";
 import {DownOutlined} from "@ant-design/icons";
 import Header from "@dhis2/d2-ui-header-bar"
+import "antd/dist/antd.css";
+import "./index.css";
 import {
     MDBBox,
-    MDBBtn,
     MDBCard,
     MDBCardBody, MDBCardFooter,
     MDBCardText,
     MDBCardTitle,
     MDBCol,
-    MDBContainer, MDBModal, MDBModalBody, MDBModalFooter, MDBModalHeader,
+    MDBContainer,
     MDBRow,
 } from "mdbreact";
 
@@ -36,12 +37,7 @@ const MainForm = (props) => {
     const [treeValue, setTreeValue] = useState();
     const [flattenedUnits, setFlattenedUnits] = useState([]);
     const [D2, setD2] = useState();
-    const [modal, setModal] = useState(false);
-    const [alertModal, setAlertModal] = useState(false);
-    const [message, setMessage] = useState("");
-    const [messageBody, setMessageBody] = useState("");
     const [summary, setSummary] = useState([]);
-    const [selectedOrgUnit, setSelectedOrgUnit] = useState();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [dates, setDates] = useState([]);
     const [hackValue, setHackValue] = useState();
@@ -49,6 +45,7 @@ const MainForm = (props) => {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [value, setValue] = useState();
+    const [selectedDate, setSelectedDate] = useState();
     const [thisPeriod, setThisPeriod] = useState(periods[0]);
     //setSummary(summary => [...summary, {"enrolment": enrolID, "message" : "Successfully deleted"}]);
     getInstance().then(d2 =>{
@@ -94,6 +91,11 @@ const MainForm = (props) => {
         }
     };
 
+    function onChange(date, dateString) {
+        console.log(date, dateString);
+        setSelectedDate(date);
+    }
+
     const handleDateChange = (selectedValue) => {
         setValue(selectedValue);
         const valueOfInput1 = selectedValue && selectedValue[0].format().split("+");
@@ -123,24 +125,6 @@ const MainForm = (props) => {
 
     },[summary, props.organizationalUnits, props.programs, props.d2, props.marketOrgUnits, props.treeMarkets]);
 
-    const handle = (value, label, extra) => {
-        setSearchValue(value)
-    };
-
-    const onSelect = (value, node) => {
-        setSelectedOrgUnit(node);
-    };
-
-    const handleTree = (value, label, extra) => {
-        setTreeValue(value)
-        //console.log(value);
-    };
-
-    const onSelectTree = (value, node) => {
-        //setOrgUnit(selectedOrgUnit => [...selectedOrgUnit, node]);
-        setSelectedOrgUnit(node);
-        console.log(node);
-    };
 
     const handleProgram = selectedOption => {
         console.log(selectedOption);
@@ -165,16 +149,6 @@ const MainForm = (props) => {
         }
     }
 
-
-    const orgUnitMenu = (
-        <Menu>
-            {orgUnitFilters.map((item, index) => (
-                <Menu.Item key={index} onClick={()=>{handleOrgFilter(item)}}>
-                    {item}
-                </Menu.Item>
-            ))}
-        </Menu>
-    );
 
 
     return (
@@ -206,21 +180,20 @@ const MainForm = (props) => {
 
                             <MDBContainer className="pl-5 mt-3">
                                 <MDBRow>
-                                    <MDBCol md={5}>
+                                    <MDBCol md={7}>
                                         <div className="text-left my-3">
                                             <label className="grey-text ml-2">
                                                 <strong>Select Program</strong>
                                             </label>
                                             <Select
-                                                style={{ width: '100%' }}
-                                                className="mt-2"
+                                                className="mt-2 w-75"
                                                 onChange={handleProgram}
                                                 options={programs}
                                             />
                                         </div>
                                     </MDBCol>
 
-                                    <MDBCol md={5} className="float-right">
+                                    <MDBCol md={5}>
                                         <div className="text-left my-3">
                                             <label className="grey-text ml-2">
                                                 <strong>Select Start & End Date</strong>
@@ -233,7 +206,7 @@ const MainForm = (props) => {
 
                                                 <RangePicker
                                                     className="mt-1"
-                                                    style={{ width: '100%' }}
+                                                    style={{ minWidth: "29rem" }}
                                                     value={hackValue || value}
                                                     disabledDate={disabledDate}
                                                     size="large"
@@ -258,22 +231,16 @@ const MainForm = (props) => {
                                     <MDBCol md={4}>
                                         <div className="text-left my-3">
                                             <label className="grey-text ml-2">
-                                                <strong>Select Start & End Date</strong>
-                                                <Dropdown overlay={menu} className="ml-3">
-                                                    <Button size="small">{thisPeriod} <DownOutlined /></Button>
-                                                </Dropdown>
+                                                <strong>Select date of events to be created</strong>
                                             </label>
                                             <Space direction="vertical" size={12}>
 
-                                                <RangePicker
-                                                    className="mt-2"
-                                                    style={{ width: '100%' }}
-                                                    value={hackValue || value}
-                                                    disabledDate={disabledDate}
+                                                <DatePicker
+                                                    className="mt-1 w-100"
                                                     size="large"
-                                                    onCalendarChange={val => setDates(val)}
-                                                    onChange={handleDateChange}
-                                                    onOpenChange={onOpenChange}
+                                                    placeholder="Select date of events"
+                                                    style={{ minWidth: "29rem" }}
+                                                    onChange={onChange}
                                                 />
                                             </Space>
                                         </div>
@@ -284,7 +251,7 @@ const MainForm = (props) => {
 
                         </MDBCardBody>
                         <MDBCardFooter>
-                            <Button type="primary" className="text-white" onClick={() => {
+                            <Button type="primary" size="large" className="text-white" onClick={() => {
                                 setSummary([]);
                                 showModal();
                             }}>
