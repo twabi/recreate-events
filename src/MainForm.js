@@ -27,15 +27,8 @@ const MainForm = (props) => {
     const basicAuth = "Basic " + btoa("ahmed:Atwabi@20");
 
     const [showLoading, setShowLoading] = useState(false);
-    const [orgUnits, setOrgUnits] = useState([]);
     const [programs, setPrograms] = useState([]);
-    const [searchValue, setSearchValue] = useState();
     const [selectedProgram, setSelectedProgram] = useState(null);
-    const [orgFilter, setOrgFilter] = useState(orgUnitFilters[0]);
-    const [choseFilter, setChoseFilter] = useState(false);
-    const [treeMarkets, setTreeMarkets] = useState(null);
-    const [treeValue, setTreeValue] = useState();
-    const [flattenedUnits, setFlattenedUnits] = useState([]);
     const [D2, setD2] = useState();
     const [summary, setSummary] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -119,9 +112,9 @@ const MainForm = (props) => {
 
 
     useEffect(() => {
-        setOrgUnits(props.organizationalUnits);
+        //setOrgUnits(props.organizationalUnits);
         setPrograms(props.programs);
-        setTreeMarkets(props.treeMarkets);
+        //setTreeMarkets(props.treeMarkets);
 
     },[summary, props.organizationalUnits, props.programs, props.d2, props.marketOrgUnits, props.treeMarkets]);
 
@@ -132,31 +125,10 @@ const MainForm = (props) => {
     };
 
 
-    const handleOrgFilter = (value) => {
-        setOrgFilter(value);
-        if(value === "Markets"){
-            setChoseFilter(true);
-            setFlattenedUnits([]);
-            //setSelectedOrgUnit(null)
-            setSearchValue(null);
-            setTreeValue(null);
-        } else {
-            setChoseFilter(false);
-            setFlattenedUnits([]);
-            //setSelectedOrgUnit(null)
-            setSearchValue(null);
-            setTreeValue(null);
-        }
-    }
-
-
-
     return (
         <div>
             <Modal title="Basic Modal" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
-                <p>Some contents...</p>
-                <p>Some contents...</p>
-                <p>Some contents...</p>
+                <p>Events Recreated successfully!</p>
             </Modal>
             {D2 && <Header className="mb-5" d2={D2}/>}
             <MDBBox className="mt-5" display="flex" justifyContent="center" >
@@ -178,7 +150,7 @@ const MainForm = (props) => {
 
                             <Divider orientation="left" className="font-italic">Select Stage 1 program and Period</Divider>
 
-                            <MDBContainer className="pl-5 mt-3">
+                            <MDBContainer className="pl-5 mt-3 mb-3">
                                 <MDBRow>
                                     <MDBCol md={7}>
                                         <div className="text-left my-3">
@@ -206,7 +178,7 @@ const MainForm = (props) => {
 
                                                 <RangePicker
                                                     className="mt-1"
-                                                    style={{ minWidth: "29rem" }}
+                                                    style={{ minWidth: "25rem" }}
                                                     value={hackValue || value}
                                                     disabledDate={disabledDate}
                                                     size="large"
@@ -223,7 +195,7 @@ const MainForm = (props) => {
                             </MDBContainer>
 
 
-                            <Divider orientation="left" className="font-italic">Select Period for stage 2 events</Divider>
+                            <Divider orientation="left" className="font-italic mt-3">Select Period for stage 2 events</Divider>
 
                             <MDBContainer className="pl-5 mt-3">
                                 <MDBRow>
