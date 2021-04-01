@@ -31,6 +31,7 @@ const MainForm = (props) => {
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [D2, setD2] = useState();
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [resultModal, setResultModal] = useState(false);
     const [dates, setDates] = useState([]);
     const [hackValue, setHackValue] = useState();
     const [range, setRange] = useState(7);
@@ -41,6 +42,9 @@ const MainForm = (props) => {
     const [thisPeriod, setThisPeriod] = useState(periods[0]);
     const [selectedProgramStage, setSelectedProgramStage] = useState(null);
     const [events, setEvents] = useState([]);
+    const [secondVariable, setSecondVariable] = useState();
+    const [allStages, setAllStages] = useState([]);
+    const [results, setResults] = useState([]);
     //setSummary(summary => [...summary, {"enrolment": enrolID, "message" : "Successfully deleted"}]);
     getInstance().then(d2 =>{
         setD2(d2);
@@ -97,10 +101,25 @@ const MainForm = (props) => {
 
         setStartDate(valueOfInput1[0])
         setEndDate(valueOfInput2[0])
-    }
+    };
 
+    const showResultModal = () => {
+        setResultModal(true);
+    };
+
+    const handleResultsCancel = () => {
+        setResultModal(false);
+    };
+
+    const handleResultOk = () => {
+        setResultModal(false);
+    };
     const showModal = () => {
         setIsModalVisible(true);
+    };
+
+    const handleCancel = () => {
+        setIsModalVisible(false);
     };
 
     const handleOk = () => {
@@ -118,7 +137,7 @@ const MainForm = (props) => {
                 "program": event.program,
                 "href": event.href,
                 "event": event.event,
-                "programStage": event.programStage,
+                "programStage": secondVariable.id,
                 "orgUnit": event.orgUnit,
                 "trackedEntityInstance": event.trackedEntityInstance,
                 "enrollment": event.enrollment,
@@ -137,16 +156,16 @@ const MainForm = (props) => {
                 "dataValues": [],
                 "notes": [ ],
                 "createdByUserInfo": {
-                    "firstName": event.createdByUserInfo.firstName,
-                    "surname": event.createdByUserInfo.surname,
-                    "uid": event.createdByUserInfo.uid,
-                    "username": event.createdByUserInfo.username,
+                    "firstName": event.createdByUserInfo && event.createdByUserInfo.firstName,
+                    "surname": event.createdByUserInfo && event.createdByUserInfo.surname,
+                    "uid": event.createdByUserInfo && event.createdByUserInfo.uid,
+                    "username": event.createdByUserInfo && event.createdByUserInfo.username,
                 },
                 "lastUpdatedByUserInfo" : {
-                    "firstName": event.lastUpdatedByUserInfo.firstName,
-                    "surname": event.lastUpdatedByUserInfo.surname,
-                    "uid": event.lastUpdatedByUserInfo.uid,
-                    "username": event.lastUpdatedByUserInfo.username,
+                    "firstName": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.firstName,
+                    "surname": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.surname,
+                    "uid": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.uid,
+                    "username": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.username,
                 }
             }
 
@@ -167,9 +186,9 @@ const MainForm = (props) => {
 
             console.log(eventPayload);
 
-            /*
+
             fetch(`https://covmw.com/namistest/api/events/${eventID}.json?`, {
-                method: 'POST',
+                method: 'PUT',
                 body: JSON.stringify(eventPayload),
                 headers: {
                     'Authorization' : basicAuth,
@@ -181,26 +200,34 @@ const MainForm = (props) => {
             })
                 .then(response => {
                     console.log(response);
+                    setResults(results => [...results, {"event": eventID, "message" : "Successfully re-created"}]);
                 })
                 .catch((error) => {
-
+                    setResults(results => [...results, {"event": eventID, "message" : "Unable to re-create"}]);
                 });
 
-             */
+
+
         });
 
-
-
-        //setIsModalVisible(false);
-    };
-
-    const handleCancel = () => {
         setIsModalVisible(false);
+        setResultModal(true);
     };
 
     const handleProgramStage = selectedOption => {
-        console.log(selectedOption);
+        //console.log(selectedOption);
         setSelectedProgramStage(selectedOption);
+        var name = selectedOption.label.split("-")[1].trim();
+
+        console.log(allStages);
+        allStages.map((stage) => {
+            var stageName = stage.label.split("-")[1].trim();
+
+            if(name === stageName && stage.label.includes("Round 2")){
+                console.log(stage)
+                setSecondVariable(stage);
+            }
+        })
     }
 
 
@@ -218,11 +245,21 @@ const MainForm = (props) => {
             const stagePoint = `programs/${selectedOption.id}.json?fields=programStages[id,name]`;
             d2.Api.getApi().get(stagePoint)
                 .then((response) => {
-                    const tempArray = []
+                    const tempArray = [];
+                    const anotherArray = [];
+
                     response.programStages.map((item, index) => {
-                        tempArray.push({"id" : item.id, "label" : item.name});
+
+                        if(item.name.includes("Round 1")){
+                            tempArray.push({"id" : item.id, "label" : item.name});
+                        }
+
+                        if(item.name.includes("Round")){
+                            anotherArray.push({"id" : item.id, "label" : item.name});
+                        }
                     });
                     setProgramStages(tempArray);
+                    setAllStages(anotherArray);
                 })
                 .catch((error) => {
                     console.log(error);
@@ -233,6 +270,7 @@ const MainForm = (props) => {
 
     const handleFetchEvents = () => {
 
+        setResults([]);
         console.log(selectedProgram.id);
         console.log(selectedProgramStage.id);
         console.log(startDate + "-" + endDate);
@@ -247,18 +285,15 @@ const MainForm = (props) => {
             var tempArray = []
             d2.Api.getApi().get(eventsPoint)
                 .then((response) => {
-                    /*
                     response.events.map((item) => {
                         var date = moment(item.eventDate);
                         if (date.isBetween(start, end)) {
                             tempArray.push(item);
                         }
                     });
-                     */
 
-
-                    console.log(response.events);
-                    setEvents(response.events);
+                    console.log(tempArray);
+                    setEvents(tempArray);
                 }).then(() => {
                     showModal();
                 })
@@ -273,8 +308,11 @@ const MainForm = (props) => {
 
     return (
         <div>
-            <Modal title="Basic Modal" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
-                <p>Events Recreated successfully!</p>
+            <Modal title="Operation Results" visible={resultModal} onOk={handleResultOk} onCancel={handleResultsCancel}>
+                {results.map((result, key) => (
+                    <p key={key}>Event: {result.event} ==> {result.message}</p>
+                ))}
+
             </Modal>
             {D2 && <Header className="mb-5" d2={D2}/>}
             <MDBBox className="mt-5" display="flex" justifyContent="center" >
