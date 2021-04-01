@@ -35,10 +35,10 @@ const MainForm = (props) => {
     const [dates, setDates] = useState([]);
     const [hackValue, setHackValue] = useState();
     const [range, setRange] = useState(7);
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
     const [value, setValue] = useState();
-    const [selectedDate, setSelectedDate] = useState();
+    const [selectedDate, setSelectedDate] = useState(null);
     const [thisPeriod, setThisPeriod] = useState(periods[0]);
     const [selectedProgramStage, setSelectedProgramStage] = useState(null);
     const [events, setEvents] = useState([]);
@@ -122,6 +122,7 @@ const MainForm = (props) => {
         setIsModalVisible(false);
     };
 
+    /*
     function makeID(length) {
         var result           = '';
         var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -131,99 +132,114 @@ const MainForm = (props) => {
         }
         return result;
     }
+     */
 
     const handleOk = () => {
-        console.log(selectedDate);
-        var date = moment(selectedDate).format("YYYY-MM-DDTHH:mm:ss.SSS");
-        console.log(moment(selectedDate).format("YYYY-MM-DDTHH:mm:ss.SSS"));
 
-        var valueArray = [];
-        events.map((event) => {
-            var eventID = event.event;
+        if(selectedDate == null){
+            alert("Select the date for round 2!")
+        } else {
+            console.log(selectedDate);
+            var date = moment(selectedDate).format("YYYY-MM-DDTHH:mm:ss.SSS");
+            console.log(moment(selectedDate).format("YYYY-MM-DDTHH:mm:ss.SSS"));
 
-            var eventPayload = {
-                "storedBy": event.storedBy,
-                "dueDate": event.dueDate,
-                "program": event.program,
-                "href": event.href,
-                //"event": eventID,
-                "programStage": secondVariable.id,
-                "orgUnit": "edb4aTWzQaZ",
-                "trackedEntityInstance": event.trackedEntityInstance,
-                "enrollment": event.enrollment,
-                "enrollmentStatus": event.enrollmentStatus,
-                "status": event.status,
-                "orgUnitName": event.orgUnitName,
-                "eventDate": event.eventDate,
-                "attributeCategoryOptions": event.attributeCategoryOptions,
-                "lastUpdated": date,
-                "created": date,
-                "completedDate": event.completedDate,
-                "followup": event.followup,
-                "deleted": event.deleted,
-                "attributeOptionCombo": event.attributeOptionCombo,
-                "completedBy": event.completedBy,
-                "dataValues": [],
-                "notes": [ ],
-                "createdByUserInfo": {
-                    "firstName": event.createdByUserInfo && event.createdByUserInfo.firstName,
-                    "surname": event.createdByUserInfo && event.createdByUserInfo.surname,
-                    "uid": event.createdByUserInfo && event.createdByUserInfo.uid,
-                    "username": event.createdByUserInfo && event.createdByUserInfo.username,
-                },
-                "lastUpdatedByUserInfo" : {
-                    "firstName": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.firstName,
-                    "surname": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.surname,
-                    "uid": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.uid,
-                    "username": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.username,
-                }
-            }
+            var valueArray = [];
+            if(events.length === 0){
+                setIsModalVisible(false);
+                setResults([]);
+                showResultModal();
+            } else {
 
-            event.dataValues && event.dataValues.map((dataValue) => {
-                valueArray.push(
-                    {
-                        "lastUpdated": dataValue.lastUpdated,
-                        "storedBy": dataValue.storedBy,
-                        "created": dataValue.created,
-                        "dataElement": dataValue.dataElement,
-                        "value": dataValue.value,
-                        "providedElsewhere": dataValue.providedElsewhere
+                events.map((event) => {
+                    var eventID = event.event;
+
+                    var eventPayload = {
+                        "storedBy": event.storedBy,
+                        "dueDate": event.dueDate,
+                        "program": event.program,
+                        "href": event.href,
+                        //"event": eventID,
+                        "programStage": secondVariable.id,
+                        "orgUnit": "edb4aTWzQaZ",
+                        "trackedEntityInstance": event.trackedEntityInstance,
+                        "enrollment": event.enrollment,
+                        "enrollmentStatus": event.enrollmentStatus,
+                        "status": event.status,
+                        "orgUnitName": event.orgUnitName,
+                        "eventDate": event.eventDate,
+                        "attributeCategoryOptions": event.attributeCategoryOptions,
+                        "lastUpdated": date,
+                        "created": date,
+                        "completedDate": event.completedDate,
+                        "followup": event.followup,
+                        "deleted": event.deleted,
+                        "attributeOptionCombo": event.attributeOptionCombo,
+                        "completedBy": event.completedBy,
+                        "dataValues": [],
+                        "notes": [ ],
+                        "createdByUserInfo": {
+                            "firstName": event.createdByUserInfo && event.createdByUserInfo.firstName,
+                            "surname": event.createdByUserInfo && event.createdByUserInfo.surname,
+                            "uid": event.createdByUserInfo && event.createdByUserInfo.uid,
+                            "username": event.createdByUserInfo && event.createdByUserInfo.username,
+                        },
+                        "lastUpdatedByUserInfo" : {
+                            "firstName": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.firstName,
+                            "surname": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.surname,
+                            "uid": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.uid,
+                            "username": event.lastUpdatedByUserInfo && event.lastUpdatedByUserInfo.username,
+                        }
                     }
-                )
-            });
 
-            eventPayload.dataValues = valueArray;
+                    event.dataValues && event.dataValues.map((dataValue) => {
+                        valueArray.push(
+                            {
+                                "lastUpdated": dataValue.lastUpdated,
+                                "storedBy": dataValue.storedBy,
+                                "created": dataValue.created,
+                                "dataElement": dataValue.dataElement,
+                                "value": dataValue.value,
+                                "providedElsewhere": dataValue.providedElsewhere
+                            }
+                        )
+                    });
 
-            console.log(eventPayload);
+                    eventPayload.dataValues = valueArray;
+
+                    console.log(eventPayload);
 
 
-            fetch(`https://covmw.com/namistest/api/events`, {
-                method: 'POST',
-                body: JSON.stringify(eventPayload),
-                headers: {
-                    'Authorization' : basicAuth,
-                    'Content-type': 'application/json',
-                },
-                credentials: "include"
+                    fetch(`https://covmw.com/namistest/api/events`, {
+                        method: 'POST',
+                        body: JSON.stringify(eventPayload),
+                        headers: {
+                            'Authorization' : basicAuth,
+                            'Content-type': 'application/json',
+                        },
+                        credentials: "include"
 
-            })
-                .then(response => {
-                    console.log(response);
+                    })
+                        .then(response => {
+                            console.log(response);
 
-                    if(response.status === 200 || response.status === 201){
-                        setResults(results => [...results, {"event": event.event, "message" : "Successfully re-created"}]);
-                    } else {
-                        setResults(results => [...results, {"event": event.event, "message" : "Unable to re-create"}]);
-                    }
-                })
-                .catch((error) => {
-                    setResults(results => [...results, {"event": event.event, "message" : "Unable to re-create"}]);
+                            if(response.status === 200 || response.status === 201){
+                                setResults(results => [...results, {"event": event.event, "message" : "Successfully re-created"}]);
+                            } else {
+                                setResults(results => [...results, {"event": event.event, "message" : "Unable to re-create"}]);
+                            }
+                        })
+                        .catch((error) => {
+                            setResults(results => [...results, {"event": event.event, "message" : "Unable to re-create"}]);
+                        });
+
                 });
 
-        });
+                setIsModalVisible(false);
+                setResultModal(true);
+            }
 
-        setIsModalVisible(false);
-        setResultModal(true);
+        }
+
     };
 
     const handleProgramStage = selectedOption => {
@@ -282,40 +298,47 @@ const MainForm = (props) => {
 
     const handleFetchEvents = () => {
 
-        setResults([]);
-        setShowLoading(true);
-        console.log(selectedProgram.id);
-        console.log(selectedProgramStage.id);
-        console.log(startDate + "-" + endDate);
+        if(selectedProgram == null || selectedProgramStage == null || startDate == null || endDate == null ){
+            alert("Fields cannot be left empty");
+        } else {
+            setResults([]);
+            setShowLoading(true);
+            console.log(selectedProgram.id);
+            console.log(selectedProgramStage.id);
+            console.log(startDate + "-" + endDate);
 
-        var programID = selectedProgram.id;
-        var stageID = selectedProgramStage.id;
-        var start = moment(startDate);
-        var end = moment(endDate);
+            var programID = selectedProgram.id;
+            var stageID = selectedProgramStage.id;
+            var start = moment(startDate);
+            var end = moment(endDate);
 
-        getInstance().then((d2) => {
-            const eventsPoint = `events.json?program=${programID}&programStage=${stageID}`;
-            var tempArray = []
-            d2.Api.getApi().get(eventsPoint)
-                .then((response) => {
-                    response.events.map((item) => {
-                        var date = moment(item.eventDate);
-                        if (date.isBetween(start, end)) {
-                            tempArray.push(item);
-                        }
-                    });
+            getInstance().then((d2) => {
+                const eventsPoint = `events.json?program=${programID}&programStage=${stageID}`;
+                var tempArray = []
+                d2.Api.getApi().get(eventsPoint)
+                    .then((response) => {
+                        response.events.map((item) => {
+                            var date = moment(item.eventDate);
+                            if (date.isBetween(start, end)) {
+                                tempArray.push(item);
+                            }
+                        });
 
-                    console.log(tempArray);
-                    setEvents(tempArray);
-                }).then(() => {
+                        console.log(tempArray);
+                        setEvents(tempArray);
+                    }).then(() => {
                     showModal();
                     setShowLoading(false);
                 })
-                .catch((error) => {
-                    console.log(error);
-                    alert("An error occurred: " + error);
-                });
-        });
+                    .catch((error) => {
+                        console.log(error);
+                        alert("An error occurred: " + error);
+                    });
+            });
+
+        }
+
+
 
     }
 
@@ -326,6 +349,8 @@ const MainForm = (props) => {
                 {results.map((result, key) => (
                     <p key={key}>Event: {result.event} ==> {result.message}</p>
                 ))}
+
+                {results.length === 0 ? <p>No Events found for the selected Period, so none re-created</p> : null}
 
             </Modal>
             {D2 && <Header className="mb-5" d2={D2}/>}
