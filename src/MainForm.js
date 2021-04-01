@@ -122,6 +122,16 @@ const MainForm = (props) => {
         setIsModalVisible(false);
     };
 
+    function makeID(length) {
+        var result           = '';
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < length; i++ ) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+
     const handleOk = () => {
         console.log(selectedDate);
         var date = moment(selectedDate).format("YYYY-MM-DDTHH:mm:ss.SSS");
@@ -136,9 +146,9 @@ const MainForm = (props) => {
                 "dueDate": event.dueDate,
                 "program": event.program,
                 "href": event.href,
-                "event": event.event,
+                //"event": eventID,
                 "programStage": secondVariable.id,
-                "orgUnit": event.orgUnit,
+                "orgUnit": "edb4aTWzQaZ",
                 "trackedEntityInstance": event.trackedEntityInstance,
                 "enrollment": event.enrollment,
                 "enrollmentStatus": event.enrollmentStatus,
@@ -187,26 +197,28 @@ const MainForm = (props) => {
             console.log(eventPayload);
 
 
-            fetch(`https://covmw.com/namistest/api/events/${eventID}.json?`, {
-                method: 'PUT',
+            fetch(`https://covmw.com/namistest/api/events`, {
+                method: 'POST',
                 body: JSON.stringify(eventPayload),
                 headers: {
                     'Authorization' : basicAuth,
                     'Content-type': 'application/json',
                 },
-
                 credentials: "include"
 
             })
                 .then(response => {
                     console.log(response);
-                    setResults(results => [...results, {"event": eventID, "message" : "Successfully re-created"}]);
+
+                    if(response.status === 200 || response.status === 201){
+                        setResults(results => [...results, {"event": event.event, "message" : "Successfully re-created"}]);
+                    } else {
+                        setResults(results => [...results, {"event": event.event, "message" : "Unable to re-create"}]);
+                    }
                 })
                 .catch((error) => {
-                    setResults(results => [...results, {"event": eventID, "message" : "Unable to re-create"}]);
+                    setResults(results => [...results, {"event": event.event, "message" : "Unable to re-create"}]);
                 });
-
-
 
         });
 
@@ -271,6 +283,7 @@ const MainForm = (props) => {
     const handleFetchEvents = () => {
 
         setResults([]);
+        setShowLoading(true);
         console.log(selectedProgram.id);
         console.log(selectedProgramStage.id);
         console.log(startDate + "-" + endDate);
@@ -296,6 +309,7 @@ const MainForm = (props) => {
                     setEvents(tempArray);
                 }).then(() => {
                     showModal();
+                    setShowLoading(false);
                 })
                 .catch((error) => {
                     console.log(error);
